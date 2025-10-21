@@ -313,7 +313,7 @@
             <div class="input-section">
                 <label for="inputText">Enter Devanāgari Text:</label>
                 <textarea id="inputText" rows="3" placeholder="e.g., एषोऽस्त्रान् विविधान् वेत्ति ...">एषोऽस्त्रान् विविधान् वेत्ति त्रैलोक्ये सचराचरे।</textarea>
-                <button id="processButton">Analyse Text</button>
+                <!-- <button id="processButton">Analyse Text</button> -->
             </div>
 
             <div id="results" class="results-section">
@@ -536,7 +536,7 @@
             });
 
             // --- Existing Syllabizer Logic ---
-            const button = document.getElementById('processButton');
+            // const button = document.getElementById('processButton');
             const input = document.getElementById('inputText');
             const out_lg = document.getElementById('output-lg');
             const out_graphemes = document.getElementById('output-graphemes');
@@ -593,7 +593,7 @@
             }
 
             // Add event listeners
-            button.addEventListener('click', processText);
+            // button.addEventListener('click', processText);
             
             // Also process text on input change for a dynamic feel
             input.addEventListener('input', processText);
