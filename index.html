@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devanagari Syllabizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&Vesper+Libre:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', serif;
+            background-color: #fdfcf9;
+            color: #333;
+            line-height: 1.7;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 5px;
+        }
+
+        label {
+            font-size: 1.2em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+            font-family: 'Vesper Libre', serif;
+            font-size: 1.3em;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+
+        button {
+            display: block;
+            width: 220px;
+            margin: 25px auto;
+            padding: 12px 20px;
+            font-family: 'Vesper Libre', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #ffffff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #results {
+            margin-top: 30px;
+            font-family: 'Vesper Libre';
+        }
+
+        /* Styling for the output boxes */
+        .output-box {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 1.6em; /* Nice big text */
+            word-wrap: break-word;
+            line-height: 2; /* Increased line-height for readability */
+            min-height: 50px;
+        }
+
+        /* Style for individual items in the output */
+        .output-box span {
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Devanāgari Varṇa Split</h1>
+
+        <label for="inputText">Enter Devanāgari Text:</label>
+        <textarea id="inputText" rows="4" placeholder="e.g., एषोऽस्त्रान् विविधान् वेत्ति ...">एषोऽस्त्रान् विविधान् वेत्ति त्रैलोक्ये सचराचरे।</textarea>
+
+        <button id="processButton">Analyse Text</button>
+
+        <div id="results">
+            <h2>Laghu / Guru (G/L)</h2>
+            <div id="output-lg" class="output-box"></div>
+
+            <h2>Syllables (Type 1 - "Cut at Swaras")</h2>
+            <div id="output-syllables-t1" class="output-box"></div>
+
+            <h2>Syllables (Type 2 - "Pronounce")</h2>
+            <div id="output-syllables-t2" class="output-box"></div>
+
+            <h2>Vyanjanas (Raw Split)</h2>
+            <div id="output-graphemes" class="output-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Start of Python to JavaScript Conversion ---
+
+        // ===
+        // Devanagari syllabizer
+        // JS conversion from syllabize.py
+        // ===
+
+        // --- Constants ---
+        const ach_re_str = "([अ-औ]|ॠ)";
+        const hal_re_str = "[क-ह]";
+
+        const aa_sign_re = "का".slice(-1); // "ा"
+        const au_sign_re = "कौ".slice(-1); // "ौ"
+        const LLi_sign_re = "कॢ".slice(-1); // "ॢ"
+
+        const ach_sign_re_str = `[${aa_sign_re}-${au_sign_re}${LLi_sign_re}${"कं".slice(-1)}${"कः".slice(-1)}${"कॅ".slice(-1)}${"कऀ".slice(-1)}${"कँ".slice(-1)}]`;
+
+        const dirgha_ach_set = new Set(["कं".slice(-1), "कः".slice(-1), 'आ', 'ा', 'ई', 'ी', 'ऊ', 'ू', 'ॠ', 'ॄ', 'ए', 'े', 'ऐ', 'ै', 'ओ', 'ो', 'औ', 'ौ']);
+        // const hrasva_ach_set = new Set(["अ", "इ", "उ", "ऋ", "ऌ", "ि", "ु", 'ृ']); // Not used in original logic
+
+        const avagraha = "ऽ";
+        const halanta = "क्".slice(-1); // "्"
+        const om = "ॐ";
+        const danda = "।";
+        const double_danda = "॥";
+
+        const digits_re_str = "[०-९]";
+
+        // --- Core Functions ---
+
+        /**
+         * The main syllabification function, ported from Python.
+         * @param {string} sentence - The input Devanagari string.
+         * @param {boolean} pronounce - false for Type 1 (cut at swaras), true for Type 2 (for laghu/guru).
+         * @returns {[string[], string[]]} An array containing [syllables, raw_graphemes].
+         */
+        function get_syllables_T12(sentence, pronounce = false) {
+            const find_re = new RegExp(`[क-हअ-औॠ]${ach_sign_re_str}*${halanta}?`, 'g');
+            
+            let syll_in_name = sentence.match(find_re) || [];
+            let vyanjanas = [...syll_in_name]; // vyanjanas = syll_in_name[:]
+
+            let start_i = pronounce ? 1 : 0;
+
+            // This logic replicates the Python 'for' loop that modifies the list in-place.
+            // We use a 'while' loop in JS to safely handle the changing array length.
+
+            if (pronounce) {
+                // Syllabize type 2, pronounce=True
+                // "laghu guru syllables as we pronounce"
+                // Merges based on the *next* item ending in halanta.
+                let i = 0;
+                while (i < syll_in_name.length - 1) { // Stop one before the end
+                    let merged = false;
+                    while (syll_in_name[i + 1] && syll_in_name[i + 1].endsWith(halanta)) {
+                        syll_in_name[i] += syll_in_name[i + 1];
+                        syll_in_name.splice(i + 1, 1); // del syll_in_name[i+1]
+                        merged = true;
+                        if (i >= syll_in_name.length - 1) break; // Array shrunk, stop inner loop
+                    }
+                    if (!merged) {
+                        i++; // Only increment if no merge happened
+                    }
+                    // If a merge happened, stay at the same 'i' to check the *new* 'i+1'
+                }
+            } else {
+                // Syllabize type 1 (default), pronounce=False
+                // "Cut at swaras"
+                // Merges based on the *current* item ending in halanta.
+                let i = 0;
+                while (i < syll_in_name.length) {
+                    let merged = false;
+                    while (syll_in_name[i] && syll_in_name[i].endsWith(halanta)) {
+                        if (!syll_in_name[i + 1]) break; // No next item to merge
+                        syll_in_name[i] += syll_in_name[i + 1];
+                        syll_in_name.splice(i + 1, 1); // del syll_in_name[i+1]
+                        merged = true;
+                    }
+                    if (!merged) {
+                        i++; // Only increment if no merge happened
+                    }
+                    // If a merge happened, stay at the same 'i' to re-check the *newly merged* syll_in_name[i]
+                }
+            }
+
+            return [syll_in_name, vyanjanas];
+        }
+
+        /**
+         * Calculates Laghu (L) and Guru (G) weights for Type 2 syllables.
+         * @param {string[]} word - An array of syllables from get_syllables_T12(w, true)[0].
+         * @returns {[string[], number]} An array containing [weights_list, count].
+         */
+        function get_laghu_guru_T2(word) {
+            let out = [];
+            let start_i = 0;
+
+            if (word.length > 0) {
+                // if the first ele does not contain swaras, it is invalid
+                const halanta_re = new RegExp(halanta, 'g');
+                const wch = (word[0].match(halanta_re) || []).length; // word[0].count(halanta)
+                
+                if (word[0].length - wch === wch) {
+                    out.push("-");
+                    start_i = 1;
+                }
+            }
+
+            for (let i = start_i; i < word.length; i++) {
+                const w = word[i];
+                const lastChar = w.slice(-1);
+                if (dirgha_ach_set.has(lastChar) || lastChar === halanta) {
+                    out.push("G");
+                } else {
+                    out.push("L");
+                }
+            }
+            
+            const count = out.filter(c => c === 'L' || c === 'G').length;
+            return [out, count];
+        }
+
+        // --- Helper Functions ---
+
+        /**
+         * Gets Type 2 syllables (for laghu/guru).
+         * @param {string} w - Input string.
+         * @returns {string[]}
+         */
+        function get_syllables(w) {
+            return get_syllables_T12(w, true)[0];
+        }
+
+        /**
+         * Gets raw graphemes (the initial split).
+         * @param {string} w - Input string.
+         * @returns {string[]}
+         */
+        function get_graphemes(w) {
+            // Note: The Python code uses pronounce=True for this, so we do the same.
+            return get_syllables_T12(w, true)[1];
+        }
+
+        /**
+         * Gets the Laghu/Guru weight list.
+         * @param {string} w - Input string.
+         * @returns {string[]}
+         */
+        function to_weight_list(w) {
+            const syllables = get_syllables(w);
+            return get_laghu_guru_T2(syllables)[0];
+        }
+
+        /**
+         * Gets Type 1 syllables ("cut at swaras").
+         * This function is added to satisfy the user's 3rd output request.
+         * @param {string} w - Input string.
+         * @returns {string[]}
+         */
+        function get_syllables_T1(w) {
+            return get_syllables_T12(w, false)[0];
+        }
+
+        // --- End of Python to JavaScript Conversion ---
+
+
+        // --- HTML Page Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const button = document.getElementById('processButton');
+            const input = document.getElementById('inputText');
+            const out_lg = document.getElementById('output-lg');
+            const out_graphemes = document.getElementById('output-graphemes');
+            const out_syl_t1 = document.getElementById('output-syllables-t1');
+            const out_syl_t2 = document.getElementById('output-syllables-t2');
+
+            /**
+             * Helper function to display an array of items in a target element.
+             * @param {HTMLElement} element - The DOM element to write to.
+             * @param {string[]} array - The array of strings to display.
+             */
+            function displayArray(element, array) {
+                element.innerHTML = ''; // Clear old results
+                if (!array || array.length === 0) {
+                    element.textContent = '(No output)';
+                    return;
+                }
+                // Create spans for styling
+                array.forEach(item => {
+                    const span = document.createElement('span');
+                    span.textContent = item;
+                    element.appendChild(span);
+                });
+            }
+
+            /**
+             * Main function to process the text and update the UI.
+             */
+            function processText() {
+                const text = input.value;
+                if (!text) {
+                    displayArray(out_lg, []);
+                    displayArray(out_graphemes, []);
+                    displayArray(out_syl_t1, []);
+                    displayArray(out_syl_t2, []);
+                    return;
+                }
+
+                // 1. Laghu / Guru
+                const laghuGuru = to_weight_list(text);
+                displayArray(out_lg, laghuGuru);
+
+                // 2. Graphemes (Raw Split)
+                const graphemes = get_graphemes(text);
+                displayArray(out_graphemes, graphemes);
+
+                // 3. Syllables (Type 1, pronounce=False)
+                const syllablesT1 = get_syllables_T1(text);
+                displayArray(out_syl_t1, syllablesT1);
+
+                // 4. Syllables (Type 2)
+                const syllables = get_syllables(text);
+                displayArray(out_syl_t2, syllables);
+            }
+
+            // Add event listeners
+            button.addEventListener('click', processText);
+            
+            // Also process text on input change for a dynamic feel
+            input.addEventListener('input', processText);
+
+            // Run once on load with the default text
+            processText();
+        });
+    </script>
+</body>
+</html>
