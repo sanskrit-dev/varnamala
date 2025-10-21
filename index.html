@@ -7,94 +7,154 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&Vesper+Libre:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- Animation Keyframes --- */
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* --- Base Styles --- */
         body {
-            font-family: 'Inter', serif;
-            background-color: #fdfcf9;
+            font-family: 'Inter', sans-serif;
+            background: teal;
+
             color: #333;
             line-height: 1.7;
             padding: 20px;
             margin: 0;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 900px;
+        .main-wrapper {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 10px;
         }
 
         h1 {
             text-align: center;
-            color: #2c3e50;
-            font-size: 2.8em;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
+            color: white;
+            font-size: 2.2em; /* Reduced size */
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
             padding-bottom: 10px;
+            font-weight: 700;
         }
 
         h2 {
-            font-size: 1.8em;
+            font-size: 1.3em; /* Reduced size */
             color: #34495e;
-            margin-top: 30px;
+            margin-top: 0;
+            margin-bottom: 10px;
             border-bottom: 1px solid #eaeaea;
             padding-bottom: 5px;
         }
 
+        /* --- Flex Layout --- */
+        .content-wrapper {
+            display: flex;
+            flex-wrap: wrap; /* Allows wrapping on smaller screens */
+            gap: 20px;
+            align-items: flex-start; /* Aligns cards to the top */
+        }
+
+        /* Input Card */
+        .input-section {
+            flex: 1 1 350px; /* Grow, shrink, base width 350px */
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: sticky; /* Sticks to top when scrolling */
+            top: 20px;
+        }
+
+        /* Results Area */
+        .results-section {
+            flex: 2 1 600px; /* Takes up more space */
+            display: flex;
+            flex-wrap: wrap; /* Result cards will wrap */
+            gap: 20px;
+        }
+
+        /* Individual Result Card */
+        .result-card {
+            flex: 1 1 300px; /* Each card can grow/shrink, min 300px */
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- Form Elements --- */
         label {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 700;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            color: #34495e;
         }
 
         textarea {
             width: 100%;
-            box-sizing: border-box; /* Ensures padding doesn't affect width */
+            box-sizing: border-box; 
             font-family: 'Vesper Libre', serif;
-            font-size: 1.3em;
-            padding: 15px;
+            font-size: 1.2em; /* Reduced size */
+            padding: 12px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            line-height: 1.6;
+            border-radius: 6px;
+            line-height: 1.5; /* Reduced line-height */
+            background-color: #fdfdfd;
         }
 
         button {
             display: block;
-            width: 220px;
-            margin: 25px auto;
+            width: 100%; /* Full width of its container */
+            margin: 15px 0 0 0; /* Reduced margin */
             padding: 12px 20px;
             font-family: 'Vesper Libre', serif;
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: 700;
             color: #ffffff;
-            background-color: #3498db;
+            background: linear-gradient(45deg, #3498db, #2980b9);
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
         }
 
         button:hover {
-            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
         }
 
+        /* --- Output Styling --- */
         #results {
-            margin-top: 30px;
+            margin-top: 0; /* Margin is now on the container */
             font-family: 'Vesper Libre';
         }
 
-        /* Styling for the output boxes */
         .output-box {
-            background-color: #f9f9f9;
+            background-color: #fcfdff;
             border: 1px solid #e0e0e0;
-            padding: 20px;
+            padding: 10px;
             border-radius: 5px;
-            font-size: 1.6em; /* Nice big text */
+            font-size: 1.4em; /* Slightly reduced */
             word-wrap: break-word;
-            line-height: 2; /* Increased line-height for readability */
-            min-height: 50px;
+            line-height: 1.9; 
+            min-height: 40px;
+            overflow-x: auto; /* Handle long results */
         }
 
         /* Style for individual items in the output */
@@ -102,35 +162,82 @@
             display: inline-block;
             padding: 5px 12px;
             margin: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #dbe4f0;
             border-radius: 4px;
-            background-color: #ffffff;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background-color: #f8faff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            
+            /* --- Animation --- */
+            /* This creates the "typewriter" cascade effect */
+            opacity: 0; /* Start hidden */
+            animation: popIn 0.4s ease-out forwards;
         }
+
+        /* Staggered Animation Delay (Pure CSS)
+           This applies a different delay to each item as it appears,
+           creating the "typewriter" or cascade effect for the results.
+        */
+        .output-box span:nth-child(1) { animation-delay: 0.0s; }
+        .output-box span:nth-child(2) { animation-delay: 0.04s; }
+        .output-box span:nth-child(3) { animation-delay: 0.08s; }
+        .output-box span:nth-child(4) { animation-delay: 0.12s; }
+        .output-box span:nth-child(5) { animation-delay: 0.16s; }
+        .output-box span:nth-child(6) { animation-delay: 0.20s; }
+        .output-box span:nth-child(7) { animation-delay: 0.24s; }
+        .output-box span:nth-child(8) { animation-delay: 0.28s; }
+        .output-box span:nth-child(9) { animation-delay: 0.32s; }
+        .output-box span:nth-child(10) { animation-delay: 0.36s; }
+        .output-box span:nth-child(11) { animation-delay: 0.40s; }
+        .output-box span:nth-child(12) { animation-delay: 0.44s; }
+        .output-box span:nth-child(13) { animation-delay: 0.48s; }
+        .output-box span:nth-child(14) { animation-delay: 0.52s; }
+        .output-box span:nth-child(15) { animation-delay: 0.56s; }
+        .output-box span:nth-child(16) { animation-delay: 0.60s; }
+        .output-box span:nth-child(17) { animation-delay: 0.64s; }
+        .output-box span:nth-child(18) { animation-delay: 0.68s; }
+        .output-box span:nth-child(19) { animation-delay: 0.72s; }
+        .output-box span:nth-child(20) { animation-delay: 0.76s; }
+        /* Any items after 20 will pop in at the same time */
+        .output-box span:nth-child(n+21) { animation-delay: 0.8s; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="main-wrapper">
         <h1>Devanāgari Varṇa Split</h1>
 
-        <label for="inputText">Enter Devanāgari Text:</label>
-        <textarea id="inputText" rows="4" placeholder="e.g., एषोऽस्त्रान् विविधान् वेत्ति ...">एषोऽस्त्रान् विविधान् वेत्ति त्रैलोक्ये सचराचरे।</textarea>
+        <div class="content-wrapper">
 
-        <button id="processButton">Analyse Text</button>
+            <div class="input-section">
+                <label for="inputText">Enter Devanāgari Text:</label>
+                <textarea id="inputText" rows="3" placeholder="e.g., एषोऽस्त्रान् विविधान् वेत्ति ...">एषोऽस्त्रान् विविधान् वेत्ति त्रैलोक्ये सचराचरे।</textarea>
+                <button id="processButton">Analyse Text</button>
+            </div>
 
-        <div id="results">
-            <h2>Laghu / Guru (G/L)</h2>
-            <div id="output-lg" class="output-box"></div>
+            <div id="results" class="results-section">
+                
+                <div class="result-card">
+                    <h2>Laghu / Guru (G/L)</h2>
+                    <div id="output-lg" class="output-box"></div>
+                </div>
+                
+                <div class="result-card">
+                    <h2>Syllables ("Cut at Swaras")</h2>
+                    <div id="output-syllables-t1" class="output-box"></div>
+                </div>
 
-            <h2>Syllables (Type 1 - "Cut at Swaras")</h2>
-            <div id="output-syllables-t1" class="output-box"></div>
+                <div class="result-card">
+                    <h2>Syllables ("Pronounce")</h2>
+                    <div id="output-syllables-t2" class="output-box"></div>
+                </div>
 
-            <h2>Syllables (Type 2 - "Pronounce")</h2>
-            <div id="output-syllables-t2" class="output-box"></div>
+                <div class="result-card">
+                    <h2>Vyanjanas (Raw Split)</h2>
+                    <div id="output-graphemes" class="output-box"></div>
+                </div>
 
-            <h2>Vyanjanas (Raw Split)</h2>
-            <div id="output-graphemes" class="output-box"></div>
+            </div>
         </div>
     </div>
 
